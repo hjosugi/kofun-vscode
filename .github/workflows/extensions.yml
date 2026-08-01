@@ -1,0 +1,127 @@
+name: Extension Package
+
+# Packaging always runs; publishing only when it is asked for. Modelled on
+# hjosugi/sql-dialect-fmt's workflow of the same name, minus the parts that
+# repository needs for its Rust binary and its Chrome extension, and with a
+# build matrix it does not need — see below.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Package version, without a leading v. Defaults to package.json."
+        required: false
+        default: ""
+      publish:
+        description: "Publish to the VS Code Marketplace."
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  package:
+    # The bundled server loads a native bridge compiled from
+    # kofun's native/semantic_bridge.c, so a VSIX only works on the platform
+    # that built it. Building one per platform and stamping it with --target is
+    # what keeps VS Code from offering a Linux build to a Mac: installed there,
+    # the server answers every request with null, showing neither an error nor
+    # the syntactic fallback — an extension that appears to do nothing at all.
+    #
+    # Windows is absent because the bundle is built by a POSIX sh script
+    # invoking cc, which the Windows runners do not provide.
+    name: Package ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: linux-x64
+          - os: macos-13
+            target: darwin-x64
+          - os: macos-14
+            target: darwin-arm64
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      - name: Resolve package version
+        id: version
+        shell: bash
+        run: |
+          if [ -n "${{ github.event.inputs.version || '' }}" ]; then
+            version="${{ github.event.inputs.version }}"
+          elif [ "${GITHUB_REF_TYPE}" = tag ] && [ "${GITHUB_REF_NAME#v}" != "${GITHUB_REF_NAME}" ]; then
+            version="${GITHUB_REF_NAME#v}"
+          else
+            version="$(node -p "require('./package.json').version")"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "packaging $version for ${{ matrix.target }}"
+
+      # A VSIX shipping a server the tests never exercised is the mistake this
+      # split makes easy to commit by accident, so the tests gate the package —
+      # on each platform, since that is the point of the matrix.
+      - name: Run the extension tests
+        run: npm test
+
+      - name: Build the VSIX
+        run: ./scripts/package-extension.sh "${{ steps.version.outputs.version }}" "${{ matrix.target }}"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: kofun-vscode-${{ matrix.target }}-v${{ steps.version.outputs.version }}
+          path: dist/*.vsix
+          if-no-files-found: error
+
+  publish:
+    name: Publish to the VS Code Marketplace
+    needs: package
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      # Checked before anything is uploaded, so a missing secret costs a few
+      # seconds rather than a partly-published version.
+      - name: Validate VS Code Marketplace credentials
+        env:
+          VSCE_AUTH_MODE: ${{ vars.VSCE_AUTH_MODE || 'pat' }}
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID || vars.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID || vars.AZURE_TENANT_ID }}
+        run: ./scripts/check-publishing-credentials.sh vscode
+
+      - uses: actions/download-artifact@v7
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Show what is about to be published
+        run: ls -l dist
+
+      - name: Azure login for the VS Code Marketplace
+        if: ${{ vars.VSCE_AUTH_MODE == 'azure' }}
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID || vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID || vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID || vars.AZURE_SUBSCRIPTION_ID }}
+          allow-no-subscriptions: true
+
+      - name: Publish every platform build together
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          VSCE_AUTH_MODE: ${{ vars.VSCE_AUTH_MODE || 'pat' }}
+        run: ./scripts/publish-vscode-marketplace.sh dist/*.vsix

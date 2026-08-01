@@ -6,7 +6,9 @@
   "publisher": "kofun-language-project",
   "main": "./extension.js",
   "scripts": {
-    "vscode:prepublish": "sh server/build-semantic-bundle.sh"
+    "vendor-server": "sh scripts/vendor-server.sh",
+    "vscode:prepublish": "sh scripts/vendor-server.sh",
+    "test": "sh scripts/test.sh"
   },
   "activationEvents": [
     "onLanguage:kofun"
@@ -22,8 +24,13 @@
     "languages": [
       {
         "id": "kofun",
-        "aliases": ["Kofun", "kofun"],
-        "extensions": [".kofun"],
+        "aliases": [
+          "Kofun",
+          "kofun"
+        ],
+        "extensions": [
+          ".kofun"
+        ],
         "configuration": "./language-configuration.json"
       }
     ],
@@ -108,15 +115,14 @@
     "ownership",
     "systems programming"
   ],
-  "license": "SEE LICENSE IN LICENSE",
+  "license": "Apache-2.0 OR MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/hjosugi/kofun.git",
-    "directory": "editor/vscode"
+    "url": "https://github.com/hjosugi/kofun-vscode.git"
   },
   "bugs": {
-    "url": "https://github.com/hjosugi/kofun/issues"
+    "url": "https://github.com/hjosugi/kofun-vscode/issues"
   },
-  "homepage": "https://github.com/hjosugi/kofun/tree/main/editor/vscode",
+  "homepage": "https://github.com/hjosugi/kofun-vscode#readme",
   "qna": "https://github.com/hjosugi/kofun/issues"
 }

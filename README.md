@@ -1,4 +1,21 @@
-# Kofun VS Code metadata
+# Kofun for VS Code
+
+The VS Code client for the [Kofun](https://github.com/hjosugi/kofun) language.
+
+This repository owns the editor client only. The language, the toolchain and
+the language server live in `hjosugi/kofun`, and the dependency runs one way:
+this repository pins that one as a submodule and copies the server out of it at
+build time. Nothing here is on kofun's side of the line, so a change to the
+extension cannot break a language gate, and the language repository does not
+carry a VS Code publishing pipeline it never runs.
+
+The server is **not committed here**, on purpose. `tests/lsp/check.sh` in kofun
+requires the server's semantic bundle to equal that repository's
+`tooling/typed-sidecar/{from-stage2,codec}.mjs` byte for byte, and only a
+checkout that owns those files can prove it. Vendoring a built copy here and
+calling it verified would be a claim this repository cannot make; instead
+`scripts/vendor-server.sh` rebuilds it from the pinned checkout, so the bytes
+come from the same source the upstream gate checks.
 
 This extension provides `.kofun` language registration, comments, brackets,
 indentation, TextMate highlighting, and snippets, plus a bundled stdio language
@@ -52,10 +69,10 @@ than line and column, so a matcher would place every problem on the wrong line;
 diagnostics come from the language server, which converts those spans correctly
 against the open document.
 
-There is no formatter, rename, or workspace symbol list: no `kofun fmt` exists,
-rename without whole-project reference coverage would be unsafe, and the server
-does not read unopened files, so a workspace symbol list would be silently
-partial.
+There is no formatter and no workspace symbol list: no `kofun fmt` exists, and
+the server does not read unopened files, so a workspace symbol list would be
+silently partial. Rename is provided, but only for locals and parameters, for
+that same reason — see above.
 
 ## Commands
 
@@ -67,11 +84,55 @@ A status-bar item reports whether the server is starting, running, or stopped,
 because a server that died is otherwise invisible until a request quietly
 returns nothing.
 
-Run `npm --prefix editor/vscode run vscode:prepublish` before opening
-`editor/vscode` with VS Code's extension development host or packaging a VSIX.
-That command builds the host Node-API producer bridge and stages the audited
-codec/projector beside the bundled server. A C11 compiler and Node headers are
-required; set `NODE_INCLUDE_DIR` only when the headers are outside the Node
-installation prefix and standard include locations.
+## Building
 
-Set `kofun.languageServer.path` only when testing another server build.
+```sh
+git submodule update --init vendor/kofun   # the pinned hjosugi/kofun checkout
+npm run vendor-server                      # copy the server out and build its bundle
+npm test                                   # manifest and end-to-end client tests
+```
+
+`vendor-server` builds the host Node-API producer bridge and stages the audited
+codec/projector beside the bundled server, so run it before opening this folder
+in VS Code's extension development host or packaging a VSIX. A C11 compiler and
+Node headers are required; set `NODE_INCLUDE_DIR` only when the headers are
+outside the Node installation prefix and the standard include locations.
+
+To develop against a working tree of kofun rather than the pinned commit, point
+`KOFUN_CHECKOUT` at it. To run a server built somewhere else entirely, set
+`kofun.languageServer.path`; the bundled one is used otherwise.
+
+## Platforms
+
+The bundled server loads a native bridge compiled from kofun's
+`native/semantic_bridge.c`, so a build only runs on the platform that produced
+it. Releases are therefore built per platform and stamped with `--target`, and
+VS Code offers each user only the build that matches their machine. Installed
+on the wrong platform, the server answers every request with `null` — no
+diagnostics, no hover, no completion, and neither an error nor the syntactic
+fallback label — so the extension looks installed and does nothing. The
+`--target` stamp is what prevents that, not a convenience.
+
+`linux-x64`, `darwin-x64` and `darwin-arm64` are built. Windows is not: the
+bundle is produced by a POSIX `sh` script invoking `cc`, which the Windows
+runners do not provide.
+
+## Releasing
+
+`scripts/package-extension.sh [version] [target]` builds the VSIX into `dist/`.
+It refuses a version that disagrees with `package.json`, so a tag, a workflow
+input and the manifest cannot drift apart silently. Omitting the target
+produces an unstamped VSIX, which is useful for local installation and wrong
+for a release.
+
+Publishing runs from the **Extension Package** workflow, which packages every
+platform on each dispatch and publishes only when asked. All the platform
+builds are published in one call, so a version never exists for some platforms
+and not others. It reads `VSCE_PAT`, or performs an Azure login when the
+`VSCE_AUTH_MODE` repository variable is `azure`; credentials are checked before
+anything is uploaded rather than after.
+
+## License
+
+Licensed under [Apache-2.0](LICENSE-APACHE) or [MIT](LICENSE-MIT), at your
+option — the same terms as the code this repository was split out of.
