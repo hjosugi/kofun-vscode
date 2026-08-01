@@ -1,3 +1,16 @@
 server/native/**
 server/build-semantic-bundle.sh
 **/*.map
+
+# The pinned kofun checkout is a build input, not a runtime dependency. It is
+# larger than everything else here put together, so shipping it by accident is
+# the one packaging mistake worth naming first.
+vendor/**
+.gitmodules
+
+scripts/**
+tests/**
+.github/**
+dist/**
+.gitignore
+.vscodeignore

@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # The same matrix the release workflow packages on. Finding out that the
+    # macOS bundle no longer builds belongs on a pull request, not on the
+    # release that was supposed to ship it.
+    name: Extension tests (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: linux-x64
+          # macos-13 was the Intel label; it is retired and jobs sent
+          # there sit queued forever rather than failing.
+          - os: macos-15-intel
+            target: darwin-x64
+          - os: macos-14
+            target: darwin-arm64
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The language server is vendored out of the pinned hjosugi/kofun
+          # submodule at build time rather than committed here, so without it
+          # there is nothing to test.
+          submodules: true
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      - name: Report the pinned server revision
+        run: git -C vendor/kofun log -1 --format='vendor/kofun is at %h %s'
+      - name: Run the extension tests
+        run: npm test
+      - name: Package, to prove the VSIX still builds
+        run: ./scripts/package-extension.sh "" "${{ matrix.target }}"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: kofun-vscode-${{ matrix.target }}
+          path: dist/*.vsix
+          if-no-files-found: error

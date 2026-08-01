@@ -1,7 +1,29 @@
 # Changelog
 
-All notable changes to the Kofun VS Code extension. Versions track the
-repository's `release: prepare` steps rather than a separate cadence.
+All notable changes to the Kofun VS Code extension.
+
+## Unreleased
+
+### Changed
+
+- **Split out of `hjosugi/kofun` into its own repository.** The language, the
+  toolchain and the language server stay there; this repository holds the VS
+  Code client and its release pipeline. The server is pinned as a submodule and
+  copied in at build time rather than committed, because the gate proving its
+  semantic bundle matches the typed-sidecar sources byte for byte can only run
+  in the repository that owns those sources.
+- **Releases are built and published per platform.** The bundled server loads a
+  natively compiled bridge, so an untargeted VSIX installs on machines where
+  the server then answers every request with `null`, showing neither an error
+  nor the syntactic fallback. Builds are now stamped with `--target` for
+  `linux-x64`, `darwin-x64` and `darwin-arm64`.
+
+### Fixed
+
+- The end-to-end client test exited 0 when the server it launched died at
+  startup: nothing kept the event loop alive, so node drained it and left the
+  test pending and silent. It now starts from a failing exit code and reports
+  what happened.
 
 ## 0.4.0
 
