@@ -6,7 +6,7 @@ All notable changes to the Kofun VS Code extension.
 
 ### Changed
 
-- **Split out of `hjosugi/kofun` into its own repository.** The language, the
+- **Split out of `kofun-lang/kofun` into its own repository.** The language, the
   toolchain and the language server stay there; this repository holds the VS
   Code client and its release pipeline. The server is pinned as a submodule and
   copied in at build time rather than committed, because the gate proving its

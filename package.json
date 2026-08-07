@@ -118,11 +118,11 @@
   "license": "Apache-2.0 OR MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/hjosugi/kofun-vscode.git"
+    "url": "https://github.com/kofun-lang/kofun-vscode.git"
   },
   "bugs": {
-    "url": "https://github.com/hjosugi/kofun-vscode/issues"
+    "url": "https://github.com/kofun-lang/kofun-vscode/issues"
   },
-  "homepage": "https://github.com/hjosugi/kofun-vscode#readme",
-  "qna": "https://github.com/hjosugi/kofun/issues"
+  "homepage": "https://github.com/kofun-lang/kofun-vscode#readme",
+  "qna": "https://github.com/kofun-lang/kofun/issues"
 }

@@ -1,9 +1,9 @@
 # Kofun for VS Code
 
-The VS Code client for the [Kofun](https://github.com/hjosugi/kofun) language.
+The VS Code client for the [Kofun](https://github.com/kofun-lang/kofun) language.
 
 This repository owns the editor client only. The language, the toolchain and
-the language server live in `hjosugi/kofun`, and the dependency runs one way:
+the language server live in `kofun-lang/kofun`, and the dependency runs one way:
 this repository pins that one as a submodule and copies the server out of it at
 build time. Nothing here is on kofun's side of the line, so a change to the
 extension cannot break a language gate, and the language repository does not
