@@ -26,6 +26,22 @@ the covered Stage 2 subset consumes one validated in-memory typed sidecar;
 sources outside the bounded producer profile use a visibly labelled syntactic
 fallback.
 
+## Installing
+
+The extension publishes as **`hjosugi.kofun`**:
+
+```sh
+code --install-extension hjosugi.kofun
+```
+
+Or search for *Kofun* in the Extensions view. The marketplace page is
+<https://marketplace.visualstudio.com/items?itemName=hjosugi.kofun>.
+
+Nothing is published there yet — the identity is decided and pinned, and the
+first release is what will make that URL resolve. Until then, build a VSIX with
+`scripts/package-extension.sh` and install it with
+`code --install-extension dist/kofun-<target>-v<version>.vsix`.
+
 ## What the editor shows
 
 - **Inlay hints** put the callee's parameter name — and its `read`/`edit`/`take`
@@ -131,6 +147,11 @@ builds are published in one call, so a version never exists for some platforms
 and not others. It reads `VSCE_PAT`, or performs an Azure login when the
 `VSCE_AUTH_MODE` repository variable is `azure`; credentials are checked before
 anything is uploaded rather than after.
+
+Those credentials have to belong to the `hjosugi` publisher account, since
+`publisher` is not free-form — it names an account the marketplace already
+holds, and a PAT scoped elsewhere cannot publish under it. The account is the
+one prerequisite the pipeline cannot create for itself.
 
 ## License
 
