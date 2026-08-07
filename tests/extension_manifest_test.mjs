@@ -26,6 +26,25 @@ for (const field of ["name", "displayName", "description", "version", "publisher
 assert.ok(manifest.repository && manifest.repository.url,
   "package.json needs a repository URL for the marketplace source link");
 assert.ok(manifest.bugs && manifest.bugs.url, "package.json needs a bugs URL");
+
+// `publisher.name` is the marketplace itemName, and it is permanent: it is the
+// page URL, the `--install-extension` argument, and the identity every
+// installed copy updates against. Changing either half after the first publish
+// publishes a *different* extension and strands the installed copies, so the
+// decided pair is pinned here rather than left to whoever edits the manifest
+// next. Changing it is a deliberate act that has to change this line too.
+const PUBLISHER = "hjosugi";
+const NAME = "kofun";
+assert.equal(manifest.publisher, PUBLISHER,
+  `the marketplace identity is ${PUBLISHER}.${NAME} and cannot change after the first publish`);
+assert.equal(manifest.name, NAME,
+  `the marketplace identity is ${PUBLISHER}.${NAME} and cannot change after the first publish`);
+
+// The README tells users what to install. If it names a different extension
+// than the one this manifest publishes, the instructions install nothing.
+const itemName = `${PUBLISHER}.${NAME}`;
+assert.ok(read("README.md").includes(itemName),
+  `README.md must state the install identity ${itemName}`);
 assert.match(manifest.version, /^\d+\.\d+\.\d+$/u);
 assert.ok(manifest.keywords.length >= 3, "too few marketplace keywords");
 assert.ok(manifest.activationEvents.includes("onLanguage:kofun"));

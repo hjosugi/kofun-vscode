@@ -19,6 +19,10 @@ if [ "$VERSION" != "$MANIFEST_VERSION" ]; then
   exit 1
 fi
 
+# The VSIX is named from the manifest rather than from a literal, so renaming
+# the extension cannot leave a build artifact advertising the old name.
+NAME="$(node -p "require('./package.json').name")"
+
 sh scripts/vendor-server.sh
 
 mkdir -p dist
@@ -30,11 +34,11 @@ mkdir -p dist
 # each build is stamped with the platform it was built on, and VS Code only
 # offers it to that platform.
 if [ -n "$TARGET" ]; then
-  OUT="dist/kofun-language-bootstrap-${TARGET}-v${VERSION}.vsix"
+  OUT="dist/${NAME}-${TARGET}-v${VERSION}.vsix"
   npx --yes @vscode/vsce@3.9.2 package \
     --no-dependencies --target "$TARGET" --out "$OUT"
 else
-  OUT="dist/kofun-language-bootstrap-v${VERSION}.vsix"
+  OUT="dist/${NAME}-v${VERSION}.vsix"
   npx --yes @vscode/vsce@3.9.2 package --no-dependencies --out "$OUT"
 fi
 

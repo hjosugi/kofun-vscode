@@ -1,9 +1,9 @@
 {
-  "name": "kofun-language-bootstrap",
+  "name": "kofun",
   "displayName": "Kofun Language Bootstrap",
   "description": "Language support for Kofun: diagnostics, navigation, completion, outline, references, signature help, and read/edit/take ownership inlay hints.",
   "version": "0.4.0",
-  "publisher": "kofun-language-project",
+  "publisher": "hjosugi",
   "main": "./extension.js",
   "scripts": {
     "vendor-server": "sh scripts/vendor-server.sh",

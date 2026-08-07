@@ -6,6 +6,15 @@ All notable changes to the Kofun VS Code extension.
 
 ### Changed
 
+- **The marketplace identity is `hjosugi.kofun`.** The manifest published as
+  `kofun-language-project.kofun-language-bootstrap` while
+  `docs/LINGUIST_RECOGNITION.md` in `hjosugi/kofun` recorded `hjosugi.kofun`;
+  both could not be true and nothing forced the choice. `publisher.name` is the
+  marketplace `itemName` — the page URL, the `--install-extension` argument,
+  and what every installed copy updates against — and it is permanent, so this
+  had to be settled before the first publish rather than corrected after.
+  The manifest test now pins the pair and requires the README to state it, and
+  the VSIX filename is derived from the manifest instead of a literal.
 - **Split out of `hjosugi/kofun` into its own repository.** The language, the
   toolchain and the language server stay there; this repository holds the VS
   Code client and its release pipeline. The server is pinned as a submodule and
