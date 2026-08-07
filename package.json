@@ -8,7 +8,9 @@
   "scripts": {
     "vendor-server": "sh scripts/vendor-server.sh",
     "vscode:prepublish": "sh scripts/vendor-server.sh",
-    "test": "sh scripts/test.sh"
+    "test": "sh scripts/test.sh",
+    "graphify:setup": "sh scripts/graphify.sh setup",
+    "graphify:update": "sh scripts/graphify.sh update"
   },
   "activationEvents": [
     "onLanguage:kofun"
